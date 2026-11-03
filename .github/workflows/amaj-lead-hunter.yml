@@ -1,0 +1,49 @@
+name: "ربات هوشمند مشتری‌یاب آماج (هر ۲ ساعت + آپدیت روزانه)"
+
+on:
+  schedule:
+    # اجرای خودکار هر ۲ ساعت شبانه‌روز بدون نیاز به روشن بودن سیستم
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      zone_override:
+        description: "شماره حلقه جغرافیایی (۱ تا ۸) یا خالی برای چرخش خودکار"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  hunt-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: دریافت مخزن و حافظه ضدتکرار مشتریان
+        uses: actions/checkout@v4
+
+      - name: راه‌اندازی Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: نصب پکیج رسمی هوش مصنوعی گوگل
+        run: npm install @google/genai
+
+      - name: اجرای موتور جستجوی شهر به شهر و ارسال تک‌به‌تک کارت‌ها (۰۰۱+) به بله / تلگرام
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BALE_BOT_TOKEN: ${{ secrets.BALE_BOT_TOKEN }}
+          BALE_CHAT_ID: ${{ secrets.BALE_CHAT_ID }}
+          ZONE_OVERRIDE: ${{ github.event.inputs.zone_override }}
+        run: node scripts/amaj-autonomous-runner.mjs
+
+      - name: ذخیره خودکار بانک مشتریان دیده‌شده و شاخص روزانه در گیت‌هاب (جلوگیری از ارسال تکراری)
+        run: |
+          git config user.name "Amaj Lead Hunter Bot"
+          git config user.email "bot@amaj-packaging.ir"
+          git add data/amaj_state.json || true
+          git diff --staged --quiet || git commit -m "chore(amaj-bot): ثبت کارت‌های جدید (۰۰۱+) و به‌روزرسانی بانک ضدتکرار"
+          git push || true
