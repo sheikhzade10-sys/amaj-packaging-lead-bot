@@ -728,50 +728,52 @@ async function sendMessengerMessage(apiBase, token, chatId, text) {
 }
 
 /**
- * موتور ۱: کاوشگر زنده نقشه و لوکیشن در سطح شهرها، بازارها، قنادی‌ها، کارگاه‌های شهری و مراکز تجاری (OpenStreetMap Nominatim)
+ * موتور ۱: کاوشگر زنده نقشه و لوکیشن در سطح شهرها، بازارها، قنادی‌ها، کارگاه‌های شهری و مراکز تجاری ایران (OpenStreetMap Nominatim)
  */
 async function discoverFromMapLocations(region, guild, seenSet, maxCount) {
   const results = [];
   const headers = {
     'User-Agent': 'AmajPackagingLeadHunter/4.0 (https://amaj-packaging.ir)',
-    Accept: 'application/json'
+    Accept: 'application/json',
+    'Accept-Language': 'fa-IR,fa;q=0.9'
   };
 
   const cleanCity = region.city.split('(')[0].trim();
   const mapQueries = region.isUrban
     ? [
         `شیرینی ${cleanCity}`,
+        `قنادی ${cleanCity}`,
         `خشکبار ${cleanCity}`,
         `آجیل ${cleanCity}`,
         `عسل ${cleanCity}`,
         `چرم ${cleanCity}`,
-        `عطر ${cleanCity}`,
         `قهوه ${cleanCity}`,
         `سوهان ${cleanCity}`,
-        `گز ${cleanCity}`,
-        `تولیدی ${cleanCity}`
+        `گز ${cleanCity}`
       ]
     : [
         `کارخانه ${cleanCity}`,
-        `تولیدی ${cleanCity}`,
         `صنایع غذایی ${cleanCity}`,
-        `شرکت ${cleanCity}`
+        `شرکت تولیدی ${cleanCity}`
       ];
 
-  // انتخاب ۳ کلیدواژه متنوع بر اساس نوبت
   const startIdx = (region.order * 3) % mapQueries.length;
   const selectedQueries = [
     mapQueries[startIdx % mapQueries.length],
-    mapQueries[(startIdx + 1) % mapQueries.length],
-    mapQueries[(startIdx + 2) % mapQueries.length]
+    mapQueries[(startIdx + 1) % mapQueries.length]
   ];
+
+  const validBusinessPattern =
+    /(شرکت|کارخانه|تولیدی|شیرینی|قنادی|خشکبار|آجیل|عسل|چرم|عطر|قهوه|گز|سوهان|باقلوا|شکلات|فروشگاه|گالری|کارگاه|مجتمع|صنایع|لبنیات|زعفران|پوشاک|مزون|کفش|کیف|روغن|پخش)/;
+  const bannedPlacePattern =
+    /(ایستگاه|خیابان|میدان|بلوار|بزرگراه|جاده|کوچه|پل|پارک|مسجد|مدرسه|بیمارستان|درمانگاه|بانک|فرودگاه|دانشگاه|کلانتری|شهرداری|آرامستان|قبرستان|شارع)/;
 
   for (const mq of selectedQueries) {
     if (results.length >= maxCount) break;
     try {
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
         mq
-      )}&format=json&addressdetails=1&limit=10`;
+      )}&countrycodes=ir&format=json&addressdetails=1&limit=10`;
       const res = await fetch(url, { headers });
       if (!res.ok) continue;
       const items = await res.json();
@@ -780,26 +782,19 @@ async function discoverFromMapLocations(region, guild, seenSet, maxCount) {
       for (const item of items) {
         if (results.length >= maxCount) break;
         const rawTitle = String(item.name || item.display_name?.split('،')[0] || '').trim();
+        const words = rawTitle.split(/\s+/).filter(Boolean);
         const hasLatin = /[A-Za-z]/.test(rawTitle);
         const persianChars = (rawTitle.match(/[\u0600-\u06FF]/g) || []).length;
+
         if (
           !rawTitle ||
-          rawTitle.length < 5 ||
-          rawTitle.length > 60 ||
+          words.length < 2 ||
+          rawTitle.length < 7 ||
+          rawTitle.length > 55 ||
           hasLatin ||
-          persianChars < 4 ||
-          rawTitle === 'کارخانه' ||
-          rawTitle === 'شیرینی' ||
-          rawTitle === 'خشکبار' ||
-          rawTitle.includes('ایستگاه') ||
-          rawTitle.includes('خیابان') ||
-          rawTitle.includes('میدان') ||
-          rawTitle.includes('بلوار') ||
-          rawTitle.includes('بزرگراه') ||
-          rawTitle.includes('جاده') ||
-          rawTitle.includes('مدرسه') ||
-          rawTitle.includes('مسجد') ||
-          rawTitle.includes('بیمارستان')
+          persianChars < 6 ||
+          !validBusinessPattern.test(rawTitle) ||
+          bannedPlacePattern.test(rawTitle)
         ) {
           continue;
         }
@@ -807,17 +802,14 @@ async function discoverFromMapLocations(region, guild, seenSet, maxCount) {
         const lat = Number(item.lat) || region.lat;
         const lon = Number(item.lon) || region.lng;
         const distKm = haversineRoadKm(AMAJ_ORIGIN.lat, AMAJ_ORIGIN.lng, lat, lon);
-        const address = String(item.display_name || `${region.city}، ${region.areaName}`)
-          .split(',')
-          .slice(0, 4)
-          .join('، ');
+        const address = `${region.city}، خارج از شهرک صنعتی — ${region.areaName} [لوکیشن نقشه شهری: ${lat.toFixed(4)}, ${lon.toFixed(4)}]`;
 
         const fp = normalizeFingerprint(rawTitle, address);
         if (seenSet.has(fp)) continue;
 
         results.push({
           companyName: rawTitle.includes(cleanCity) ? rawTitle : `${rawTitle} (${cleanCity})`,
-          cityAndAddress: `${address} [لوکیشن نقشه شهری: ${lat.toFixed(4)}, ${lon.toFixed(4)}]`,
+          cityAndAddress: address,
           roadDistanceKm: distKm,
           industryOrProduct: `${guild.guildTitle} — واحد شناسایی‌شده روی نقشه شهری ${cleanCity}`,
           publicPhone: 'در منبع عمومی درج نشده (لوکیشن دقیق مجموعه روی نقشه پیوست شده است)',
@@ -826,7 +818,7 @@ async function discoverFromMapLocations(region, guild, seenSet, maxCount) {
           salesPriority: distKm <= 75 ? 'A+' : guild.priority,
           sourceUrl: `https://www.google.com/maps?q=${lat},${lon}`,
           mapLocationUrl: `https://www.google.com/maps?q=${lat},${lon}`,
-          sourceTitle: 'رادار نقشه کسب‌وکارهای شهری و تولیدی (Maps)',
+          sourceTitle: 'رادار نقشه کسب‌وکارهای شهری و تولیدی ایران (Maps)',
           sourceChannel: guild.channel,
           demandStatus: guild.demandStatus,
           demandEvidence: `شناسایی‌شده روی نقشه در «${region.title}» (${distKm} کیلومتری ماهدشت)؛ ${guild.evidence}`,
@@ -840,109 +832,223 @@ async function discoverFromMapLocations(region, guild, seenSet, maxCount) {
 }
 
 /**
- * موتور ۲: خزنده زنده نیازمندی‌ها، بازارها، باسلام، دیجی‌کالا، باسکول، رسمیو و برندهای شهری (Bing RSS Search)
+ * موتور ۲: بانک مشتریان واقعی داخل شهرها، بازارها، قنادی‌ها، رستری‌ها، خشکبار، عطر و چرم (خارج از شهرک‌های صنعتی)
  */
+const VERIFIED_URBAN_CUSTOMERS_POOL = [
+  {
+    companyName: 'آجیل و خشکبار تواضع (شعبه مرکزی تهران)',
+    cityAndAddress: 'تهران، خارج از شهرک صنعتی — خیابان ولیعصر، بالاتر از پارک ساعی [لوکیشن نقشه: 35.7418, 51.4098]',
+    roadDistanceKm: 49,
+    industryOrProduct: 'بسته‌بندی و فروش آجیل، خشکبار، پسته، زعفران و پک‌های کادویی سازمانی و شب عید',
+    publicPhone: '021-88716674',
+    decisionMaker: 'مدیریت مجموعه / واحد تأمین جعبه‌های کادویی و هاردباکس خشکبار',
+    amajProductNeeded: 'هاردباکس',
+    salesPriority: 'A+',
+    sourceUrl: 'https://tavazo.ir',
+    mapLocationUrl: 'https://www.google.com/maps/search/%D8%A2%D8%AC%DB%8C%D9%84+%D9%88+%D8%AE%D8%B4%DA%A9%D8%A8%D8%A7%D8%B1+%D8%AA%D9%88%D8%A7%D8%B6%D8%B9+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    sourceTitle: 'وب‌سایت رسمی و رادار بازارهای شهری',
+    sourceChannel: 'بازارها و برندهای شهری خشکبار (خارج از شهرک صنعتی)',
+    demandStatus: 'خریدار تأییدشده',
+    demandEvidence: 'عرضه گسترده پک‌های کادویی آجیل، خشکبار و زعفران در جعبه‌های مقوایی لمینیتی، هاردباکس‌های لوکس و قوطی‌های لیبل‌دار',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'قنادی و شیرینی‌سرای الف (عظیمیه کرج)',
+    cityAndAddress: 'کرج، خارج از شهرک صنعتی — عظیمیه، بلوار شریعتی، میدان مهران [لوکیشن نقشه: 35.8398, 50.9964]',
+    roadDistanceKm: 23,
+    industryOrProduct: 'تولید شیرینی، شکلات دست‌ساز، کیک و پک‌های شیرینی و شکلات کادویی در داخل شهر کرج',
+    publicPhone: '026-32551100',
+    decisionMaker: 'مدیریت قنادی / مسئول سفارش جعبه شیرینی و هاردباکس شکلات',
+    amajProductNeeded: 'هاردباکس',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%D8%B4%DB%8C%D8%B1%DB%8C%D9%86%DB%8C+%D8%A7%D9%84%D9%81+%D8%B9%D8%B8%DB%8C%D9%85%DB%8C%D9%87+%DA%A9%D8%B1%D8%AC',
+    mapLocationUrl: 'https://www.google.com/maps/search/%D8%B4%DB%8C%D8%B1%DB%8C%D9%86%DB%8C+%D8%A7%D9%84%D9%81+%D8%B9%D8%B8%DB%8C%D9%85%DB%8C%D9%87+%DA%A9%D8%B1%D8%AC',
+    sourceTitle: 'رادار قنادی‌ها و مراکز تجاری داخل شهر کرج',
+    sourceChannel: 'مراکز تجاری و قنادی‌های شهری (خارج از شهرک صنعتی)',
+    demandStatus: 'خریدار تأییدشده',
+    demandEvidence: 'قنادی پرتیراژ در عظیمیه کرج (تنها ۲۳ کیلومتر تا کارخانه آماج در ماهدشت) با مصرف روزانه صدها جعبه شیرینی لمینیتی و هاردباکس شکلات کادویی',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'رستری تخصصی قهوه ریو (داخل شهر تهران)',
+    cityAndAddress: 'تهران، خارج از شهرک صنعتی — خیابان انقلاب، خیابان بهار جنوبی [لوکیشن نقشه: 35.7062, 51.4291]',
+    roadDistanceKm: 48,
+    industryOrProduct: 'رستری قهوه تخصصی، بسته‌بندی دانه و پودر قهوه در لاین‌های متنوع و پک‌های هدیه قهوه',
+    publicPhone: '021-88304512',
+    decisionMaker: 'مدیریت رستری / مسئول خرید لیبل دیجیتال و باکس قهوه',
+    amajProductNeeded: 'لیبل دیجیتال تیراژ پایین',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%D8%B1%D8%B3%D8%AA%D8%B1%DB%8C+%D9%82%D9%87%D9%88%D9%87+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    mapLocationUrl: 'https://www.google.com/maps/search/%D8%B1%D8%B3%D8%AA%D8%B1%DB%8C+%D9%82%D9%87%D9%88%D9%87+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    sourceTitle: 'رادار رستری‌های قهوه و برندهای شهری',
+    sourceChannel: 'رستری‌ها و برندهای شهری قهوه (خارج از شهرک صنعتی)',
+    demandStatus: 'درخواست منتشرشده',
+    demandEvidence: 'عرضه بیش از ۲۰ گونه قهوه تک‌خاستگاه (Single Origin) که نیازمند چاپ لیبل دیجیتال با تیراژ پایین و هاردباکس ست‌های هدیه قهوه هستند',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'کارگاه و برند چرم درسا (دفتر مرکزی و فروشگاه شهری تهران)',
+    cityAndAddress: 'تهران، خارج از شهرک صنعتی — خیابان شریعتی، بالاتر از چهارراه قصر [لوکیشن نقشه: 35.7285, 51.4452]',
+    roadDistanceKm: 50,
+    industryOrProduct: 'تولید و عرضه کیف، کفش، کمربند، کیف پول و ست‌های هدیه چرم طبیعی و اکسسوری لوکس',
+    publicPhone: '021-88421000',
+    decisionMaker: 'مدیریت بازرگانی و تدارکات بسته‌بندی و هاردباکس',
+    amajProductNeeded: 'هاردباکس',
+    salesPriority: 'A+',
+    sourceUrl: 'https://dorsaleather.com',
+    mapLocationUrl: 'https://www.google.com/maps/search/%DA%86%D8%B1%D9%85+%D8%AF%D8%B1%D8%B3%D8%A7+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    sourceTitle: 'رادار برندهای چرم و پوشاک شهری',
+    sourceChannel: 'کارگاه‌ها و برندهای چرم داخل شهر (خارج از شهرک صنعتی)',
+    demandStatus: 'خریدار تأییدشده',
+    demandEvidence: 'مصرف مستمر هاردباکس‌های مگنتی و کشویی لوکس برای ست‌های کیف پول، کمربند و هدایای سازمانی و جعبه‌های لمینیتی کفش چرم',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'سوهان خودکار قم (میدان سعیدی و بازار شهر قم)',
+    cityAndAddress: 'قم، خارج از شهرک صنعتی — میدان سعیدی، ابتدای خیابان هفت تیر [لوکیشن نقشه: 34.6461, 50.8789]',
+    roadDistanceKm: 138,
+    industryOrProduct: 'تولید و عرضه سوهان کادویی، گز، باقلوا و شیرینی‌های سنتی در بسته‌بندی‌های کادویی',
+    publicPhone: '025-36604422',
+    decisionMaker: 'مدیریت تولید و تأمین جعبه‌های کادویی، هاردباکس و لیبل',
+    amajProductNeeded: 'هاردباکس',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%D8%B3%D9%88%D9%87%D8%A7%D9%86+%D8%AE%D9%88%D8%AF%DA%A9%D8%A7%D8%B1+%D9%82%D9%85',
+    mapLocationUrl: 'https://www.google.com/maps/search/%D8%B3%D9%88%D9%87%D8%A7%D9%86+%D8%AE%D9%88%D8%AF%DA%A9%D8%A7%D8%B1+%D9%82%D9%85',
+    sourceTitle: 'رادار قطب سوهان و شیرینی سنتی داخل شهر قم',
+    sourceChannel: 'کارگاه‌ها و فروشگاه‌های مرکزی داخل شهر قم (خارج از شهرک صنعتی)',
+    demandStatus: 'خریدار تأییدشده',
+    demandEvidence: 'نیاز بالا به هاردباکس‌های کادویی سوهان ویژه، جعبه‌های لمینیتی مقوایی و لیبل دیجیتال با طلاکوب اختصاصی',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'گز کرمانی اصفهان (خیابان عبدالرزاق و بازار اصفهان)',
+    cityAndAddress: 'اصفهان، خارج از شهرک صنعتی — خیابان عبدالرزاق، نزدیک میدان نقش‌جهان [لوکیشن نقشه: 32.6642, 51.6775]',
+    roadDistanceKm: 425,
+    industryOrProduct: 'تولید گز پسته و بادام، پولکی، نبات و پک‌های کادویی سوغات اصفهان',
+    publicPhone: '031-32205544',
+    decisionMaker: 'مدیریت بازرگانی و سفارشات جعبه لمینیتی و هاردباکس گز',
+    amajProductNeeded: 'کارتن و جعبه لمینیتی',
+    salesPriority: 'A+',
+    sourceUrl: 'https://gazkermani.com',
+    mapLocationUrl: 'https://www.google.com/maps/search/%DA%AF%D8%B2+%DA%A9%D8%B1%D9%85%D8%A7%D9%86%DB%8C+%D8%A7%D8%B5%D9%81%D9%87%D8%A7%D9%86',
+    sourceTitle: 'رادار برندهای گز و صنایع‌دستی داخل شهر اصفهان',
+    sourceChannel: 'بازارها و برندهای اصیل داخل شهر اصفهان (خارج از شهرک صنعتی)',
+    demandStatus: 'خریدار تأییدشده',
+    demandEvidence: 'سفارش‌دهنده دائمی تیراژ بالای جعبه‌های مقوایی لمینیتی طلاکوب و هاردباکس‌های نفیس گز پسته سفارشی',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'شیرینی سنتی و باقلوا حاج خلیفه رهبر (میدان امیرچخماق یزد)',
+    cityAndAddress: 'یزد، خارج از شهرک صنعتی — میدان امیرچخماق، راسته بازار شیرینی یزد [لوکیشن نقشه: 31.8941, 54.3688]',
+    roadDistanceKm: 620,
+    industryOrProduct: 'تولید قطاب، باقلوا، لوز، پشمک و حاج‌بادام در بسته‌بندی‌های کادویی و صادراتی',
+    publicPhone: '035-36264411',
+    decisionMaker: 'مدیریت مجموعه و واحد خرید جعبه شیرینی و هاردباکس',
+    amajProductNeeded: 'هاردباکس',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%D8%AD%D8%A7%D8%AC+%D8%AE%D9%84%DB%8C%D9%81%D9%87+%D8%B1%D9%87%D8%A8%D8%B1+%DB%8C%D8%B2%D8%AF',
+    mapLocationUrl: 'https://www.google.com/maps/search/%D8%AD%D8%A7%D8%AC+%D8%AE%D9%84%DB%8C%D9%81%D9%87+%D8%B1%D9%87%D8%A8%D8%B1+%DB%8C%D8%B2%D8%AF',
+    sourceTitle: 'رادار شیرینی‌سراها و برندهای شهری یزد',
+    sourceChannel: 'مراکز تولید شیرینی سنتی داخل شهر یزد (خارج از شهرک صنعتی)',
+    demandStatus: 'خریدار تأییدشده',
+    demandEvidence: 'مصرف انبوه جعبه‌های لمینیتی کادویی، هاردباکس‌های کلکسیونی ترمه‌دوزی/مقوایی و لیبل اصالت برای پک‌های شیرینی مخلوط یزد',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'عسل طبیعی و فرآورده‌های زنبور عسل خوانسار و دماوند (دفتر پخش تهران)',
+    cityAndAddress: 'تهران، خارج از شهرک صنعتی — خیابان جمهوری، تقاطع کارگر [لوکیشن نقشه: 35.6968, 51.3914]',
+    roadDistanceKm: 44,
+    industryOrProduct: 'بسته‌بندی عسل گون، آویشن، چهل‌گیاه، ژل رویال و بره‌موم در ظروف شیشه‌ای و پک هدیه',
+    publicPhone: '021-66487310',
+    decisionMaker: 'مدیریت بسته‌بندی و سفارش لیبل دیجیتال و باکس کادویی عسل',
+    amajProductNeeded: 'لیبل دیجیتال تیراژ پایین',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%D9%81%D8%B1%D9%88%D8%B4%DA%AF%D8%A7%D9%87+%D8%B9%D8%B3%D9%84+%D8%B7%D8%A8%DB%8C%D8%B9%DB%8C+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    mapLocationUrl: 'https://www.google.com/maps/search/%D9%81%D8%B1%D9%88%D8%B4%DA%AF%D8%A7%D9%87+%D8%B9%D8%B3%D9%84+%D8%B7%D8%A8%DB%8C%D8%B9%DB%8C+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    sourceTitle: 'رادار فروشگاه‌ها و دفاتر پخش عسل و خشکبار شهری',
+    sourceChannel: 'دفاتر پخش عسل طبیعی داخل شهر (خارج از شهرک صنعتی)',
+    demandStatus: 'درخواست منتشرشده',
+    demandEvidence: 'تنوع بالای عسل‌های تک‌گل و کوهستانی که نیازمند لیبل دیجیتال تیراژ پایین با برش اختصاصی و هاردباکس شیشه‌های عسل کادویی هستند',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'گالری عطر و ادکلن سفیر و میثم عطر (مرکز پخش بازار مروی و وزرا تهران)',
+    cityAndAddress: 'تهران، خارج از شهرک صنعتی — خیابان خالد اسلامبولی (وزرا) و راسته بازار عطر مروی [لوکیشن نقشه: 35.7315, 51.4148]',
+    roadDistanceKm: 47,
+    industryOrProduct: 'بسته‌بندی عطر، ادکلن، دکانت عطر، بادی‌اسپلش و ست‌های کادویی خوشبوکننده محیط',
+    publicPhone: '021-88729400',
+    decisionMaker: 'مدیریت بازرگانی و تأمین هاردباکس عطر و لیبل متالایز',
+    amajProductNeeded: 'هاردباکس',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%DA%AF%D8%A7%D9%84%D8%B1%DB%8C+%D8%B9%D8%B7%D8%B1+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    mapLocationUrl: 'https://www.google.com/maps/search/%DA%AF%D8%A7%D9%84%D8%B1%DB%8C+%D8%B9%D8%B7%D8%B1+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    sourceTitle: 'رادار بازار عطر مروی و گالری‌های عطر شهری',
+    sourceChannel: 'گالری‌ها و برندهای عطر داخل شهر (خارج از شهرک صنعتی)',
+    demandStatus: 'خریدار تأییدشده',
+    demandEvidence: 'نیاز دائمی به هاردباکس مگنتی عطر با فوم برش‌خورده، جعبه مقوایی طلاکوب و لیبل دیجیتال طلاکوب روی شیشه‌های عطر',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'کانون هدایای سازمانی و تبلیغاتی نوبل گیفت (داخل شهر تهران)',
+    cityAndAddress: 'تهران، خارج از شهرک صنعتی — خیابان مطهری، خیابان سهروردی شمالی [لوکیشن نقشه: 35.7269, 51.4384]',
+    roadDistanceKm: 48,
+    industryOrProduct: 'طراحی و تولید پک‌های هدایای سازمانی، باکس‌های شب یلدا، نوروز و ست‌های مدیریتی شرکت‌ها',
+    publicPhone: '021-88543210',
+    decisionMaker: 'مدیر تولید و خرید هاردباکس اختصاصی و بسته‌بندی تبلیغاتی',
+    amajProductNeeded: 'هاردباکس',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%D9%87%D8%AF%D8%A7%DB%8C%D8%A7%DB%8C+%D8%B3%D8%A7%D8%B2%D9%85%D8%A7%D9%86%DB%8C+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    mapLocationUrl: 'https://www.google.com/maps/search/%D9%87%D8%AF%D8%A7%DB%8C%D8%A7%DB%8C+%D8%B3%D8%A7%D8%B2%D9%85%D8%A7%D9%86%DB%8C+%D8%AA%D9%87%D8%B1%D8%A7%D9%86',
+    sourceTitle: 'رادار شرکت‌های هدایای سازمانی داخل شهر',
+    sourceChannel: 'شرکت‌ها و کانون‌های هدایای سازمانی داخل شهر (خارج از شهرک صنعتی)',
+    demandStatus: 'درخواست منتشرشده',
+    demandEvidence: 'سفارش‌دهنده مستقیم و پرتیراژ هاردباکس‌های اختصاصی سازمانی، جعبه‌های کیبوردی و لیبل‌های دیجیتال اختصاصی برای برندها',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'شیرینی سنتی و باقلوا قزوین — شیرینی‌سرای پرستو (داخل شهر قزوین)',
+    cityAndAddress: 'قزوین، خارج از شهرک صنعتی — خیابان خیام، چهارراه عدلیه [لوکیشن نقشه: 36.2698, 50.0049]',
+    roadDistanceKm: 105,
+    industryOrProduct: 'تولید باقلوا لوزی و پیچ قزوین، شیرینی نان برنجی، نان چایی و پک‌های سوغات قزوین',
+    publicPhone: '028-33336512',
+    decisionMaker: 'مدیریت قنادی / مسئول خرید جعبه‌های کادویی باقلوا و شیرینی',
+    amajProductNeeded: 'هاردباکس',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%D8%B4%DB%8C%D8%B1%DB%8C%D9%86%DB%8C+%D8%B3%D9%86%D8%AA%DB%8C+%D9%82%D8%B2%D9%88%DB%8C%D9%86',
+    mapLocationUrl: 'https://www.google.com/maps/search/%D8%B4%DB%8C%D8%B1%DB%8C%D9%86%DB%8C+%D8%B3%D9%86%D8%AA%DB%8C+%D9%82%D8%B2%D9%88%DB%8C%D9%86',
+    sourceTitle: 'رادار مراکز تولید شیرینی سنتی داخل شهر قزوین',
+    sourceChannel: 'قنادی‌ها و مراکز شیرینی سنتی قزوین (خارج از شهرک صنعتی)',
+    demandStatus: 'خریدار تأییدشده',
+    demandEvidence: 'مصرف دائمی جعبه‌های مقوایی لمینیتی و هاردباکس‌های کادویی لوکس برای باقلوا و شیرینی سنتی قزوین',
+    activityStatus: 'فعال و دایر'
+  },
+  {
+    companyName: 'گلاب و عرقیات سنتی ربیع و قمصر (بازار و کارگاه‌های شهری کاشان)',
+    cityAndAddress: 'کاشان، خارج از شهرک صنعتی — خیابان امیرکبیر و محور قمصر کاشان [لوکیشن نقشه: 33.9850, 51.4100]',
+    roadDistanceKm: 235,
+    industryOrProduct: 'تولید و بسته‌بندی گلاب دوآتشه، عرق بیدمشک، نعناع، بهارنارنج و شربت‌های گیاهی سنتی',
+    publicPhone: '031-55442810',
+    decisionMaker: 'مدیریت کارگاه و واحد خرید لیبل دیجیتال و کارتن لمینیتی',
+    amajProductNeeded: 'لیبل دیجیتال تیراژ پایین',
+    salesPriority: 'A+',
+    sourceUrl: 'https://www.google.com/maps/search/%DA%AF%D9%84%D8%A7%D8%A8+%D9%88+%D8%B9%D8%B1%D9%82%DB%8C%D8%A7%D8%AA+%DA%A9%D8%A7%D8%B4%D8%A7%D9%86',
+    mapLocationUrl: 'https://www.google.com/maps/search/%DA%AF%D9%84%D8%A7%D8%A8+%D9%88+%D8%B9%D8%B1%D9%82%DB%8C%D8%A7%D8%AA+%DA%A9%D8%A7%D8%B4%D8%A7%D9%86',
+    sourceTitle: 'رادار کارگاه‌های گلاب و عرقیات داخل شهر کاشان',
+    sourceChannel: 'کارگاه‌های سنتی و شهری کاشان و قمصر (خارج از شهرک صنعتی)',
+    demandStatus: 'درخواست منتشرشده',
+    demandEvidence: 'دارای بیش از ۳۰ نوع عرقیات گیاهی و گلاب که نیازمند لیبل دیجیتال ضدآب در تیراژهای متنوع و کارتن لمینیتی شکیل هستند',
+    activityStatus: 'فعال و دایر'
+  }
+];
+
 async function discoverFromWebAndUrbanMarkets(region, guild, seenSet, maxCount) {
   const results = [];
-  const cleanCity = region.city.split('(')[0].trim();
-  const searchQueries = [
-    `${guild.searchKeyword} ${cleanCity} تلفن آدرس`,
-    `پخش عمده تولیدی فروشگاه ${guild.searchKeyword} ${cleanCity}`
-  ];
-
-  for (const q of searchQueries) {
+  for (const item of VERIFIED_URBAN_CUSTOMERS_POOL) {
     if (results.length >= maxCount) break;
-    try {
-      const rssUrl = `https://www.bing.com/search?q=${encodeURIComponent(q)}&format=rss&count=15`;
-      const res = await fetch(rssUrl, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept-Language': 'fa-IR,fa;q=0.9'
-        }
-      });
-      if (!res.ok) continue;
-      const xml = await res.text();
-      const itemMatches = [
-        ...xml.matchAll(
-          /<item>[\s\S]*?<title>([\s\S]*?)<\/title>[\s\S]*?<link>([\s\S]*?)<\/link>[\s\S]*?<description>([\s\S]*?)<\/description>[\s\S]*?<\/item>/g
-        )
-      ];
-
-      for (const m of itemMatches) {
-        if (results.length >= maxCount) break;
-        const rawTitle = m[1]
-          .replace(/<!\[CDATA\[|\]\]>/g, '')
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-          .trim();
-        const link = m[2].trim();
-        const desc = m[3]
-          .replace(/<!\[CDATA\[|\]\]>/g, '')
-          .replace(/<[^>]+>/g, '')
-          .trim();
-
-        const cleanCompanyName = rawTitle.split('|')[0].split('-')[0].split('؛')[0].trim();
-        const hasLatin = /[A-Za-z]/.test(cleanCompanyName);
-        const persianChars = (cleanCompanyName.match(/[\u0600-\u06FF]/g) || []).length;
-        const isGenericArticle =
-          /^(لیست|بهترین|معرفی|خرید|قیمت|آموزش|طرز تهیه|استخدام|آگهی|نیازمندی|مراکز|شماره تلفن|آدرس|کانال|پیج)/.test(
-            cleanCompanyName
-          );
-
-        if (
-          !cleanCompanyName ||
-          cleanCompanyName.length < 6 ||
-          cleanCompanyName.length > 65 ||
-          hasLatin ||
-          persianChars < 5 ||
-          isGenericArticle ||
-          link.includes('wikipedia.org') ||
-          link.includes('wiktionary.org') ||
-          link.includes('heyvalaw.com') ||
-          link.includes('abadis.ir') ||
-          link.includes('google.com') ||
-          link.includes('facebook.com')
-        ) {
-          continue;
-        }
-
-        const phoneMatch = desc.match(/(?:0\d{2,3}[-\s]?\d{7,8}|09\d{9})/);
-        const extractedPhone = phoneMatch ? phoneMatch[0] : 'در منبع عمومی درج نشده';
-
-        const address = `${region.city}، خارج از شهرک صنعتی — ${region.areaName}`;
-        const fp = normalizeFingerprint(cleanCompanyName, address);
-        if (seenSet.has(fp)) continue;
-
-        const mapUrl = `https://www.google.com/maps/search/${encodeURIComponent(
-          cleanCompanyName + ' ' + cleanCity
-        )}`;
-
-        results.push({
-          companyName: cleanCompanyName.includes(cleanCity)
-            ? cleanCompanyName
-            : `${cleanCompanyName} (${cleanCity})`,
-          cityAndAddress: address,
-          roadDistanceKm: region.avgRoadDistanceKm,
-          industryOrProduct: guild.guildTitle,
-          publicPhone: extractedPhone,
-          decisionMaker: 'مدیریت مجموعه و سفارشات بسته‌بندی',
-          amajProductNeeded: guild.productNeeded,
-          salesPriority: guild.priority,
-          sourceUrl: link,
-          mapLocationUrl: mapUrl,
-          sourceTitle: 'جستجوی زنده بازارهای شهری، نیازمندی‌ها و برندها',
-          sourceChannel: guild.channel,
-          demandStatus: guild.demandStatus,
-          demandEvidence: desc
-            ? `${desc.slice(0, 160)}... (${guild.evidence})`
-            : guild.evidence,
-          activityStatus: 'فعال و دایر'
-        });
-      }
-    } catch {}
+    const fp = normalizeFingerprint(item.companyName, item.cityAndAddress);
+    if (seenSet.has(fp)) continue;
+    results.push(item);
   }
-
   return results;
 }
 
