@@ -780,16 +780,26 @@ async function discoverFromMapLocations(region, guild, seenSet, maxCount) {
       for (const item of items) {
         if (results.length >= maxCount) break;
         const rawTitle = String(item.name || item.display_name?.split('،')[0] || '').trim();
+        const hasLatin = /[A-Za-z]/.test(rawTitle);
+        const persianChars = (rawTitle.match(/[\u0600-\u06FF]/g) || []).length;
         if (
           !rawTitle ||
-          rawTitle.length < 4 ||
+          rawTitle.length < 5 ||
+          rawTitle.length > 60 ||
+          hasLatin ||
+          persianChars < 4 ||
           rawTitle === 'کارخانه' ||
           rawTitle === 'شیرینی' ||
           rawTitle === 'خشکبار' ||
           rawTitle.includes('ایستگاه') ||
           rawTitle.includes('خیابان') ||
           rawTitle.includes('میدان') ||
-          rawTitle.includes('بلوار')
+          rawTitle.includes('بلوار') ||
+          rawTitle.includes('بزرگراه') ||
+          rawTitle.includes('جاده') ||
+          rawTitle.includes('مدرسه') ||
+          rawTitle.includes('مسجد') ||
+          rawTitle.includes('بیمارستان')
         ) {
           continue;
         }
@@ -806,7 +816,7 @@ async function discoverFromMapLocations(region, guild, seenSet, maxCount) {
         if (seenSet.has(fp)) continue;
 
         results.push({
-          companyName: `${rawTitle} (${cleanCity})`,
+          companyName: rawTitle.includes(cleanCity) ? rawTitle : `${rawTitle} (${cleanCity})`,
           cityAndAddress: `${address} [لوکیشن نقشه شهری: ${lat.toFixed(4)}, ${lon.toFixed(4)}]`,
           roadDistanceKm: distKm,
           industryOrProduct: `${guild.guildTitle} — واحد شناسایی‌شده روی نقشه شهری ${cleanCity}`,
@@ -837,8 +847,7 @@ async function discoverFromWebAndUrbanMarkets(region, guild, seenSet, maxCount) 
   const cleanCity = region.city.split('(')[0].trim();
   const searchQueries = [
     `${guild.searchKeyword} ${cleanCity} تلفن آدرس`,
-    `پخش عمده OR تولیدی OR گالری OR فروشگاه ${guild.searchKeyword} ${cleanCity}`,
-    `خرید جعبه OR هاردباکس OR لیبل OR کارتن ${cleanCity} ${guild.searchKeyword.split(' ')[1] || ''}`
+    `پخش عمده تولیدی فروشگاه ${guild.searchKeyword} ${cleanCity}`
   ];
 
   for (const q of searchQueries) {
@@ -848,7 +857,8 @@ async function discoverFromWebAndUrbanMarkets(region, guild, seenSet, maxCount) 
       const res = await fetch(rssUrl, {
         headers: {
           'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept-Language': 'fa-IR,fa;q=0.9'
         }
       });
       if (!res.ok) continue;
@@ -872,13 +882,27 @@ async function discoverFromWebAndUrbanMarkets(region, guild, seenSet, maxCount) 
           .replace(/<[^>]+>/g, '')
           .trim();
 
+        const cleanCompanyName = rawTitle.split('|')[0].split('-')[0].split('؛')[0].trim();
+        const hasLatin = /[A-Za-z]/.test(cleanCompanyName);
+        const persianChars = (cleanCompanyName.match(/[\u0600-\u06FF]/g) || []).length;
+        const isGenericArticle =
+          /^(لیست|بهترین|معرفی|خرید|قیمت|آموزش|طرز تهیه|استخدام|آگهی|نیازمندی|مراکز|شماره تلفن|آدرس|کانال|پیج)/.test(
+            cleanCompanyName
+          );
+
         if (
-          !rawTitle ||
+          !cleanCompanyName ||
+          cleanCompanyName.length < 6 ||
+          cleanCompanyName.length > 65 ||
+          hasLatin ||
+          persianChars < 5 ||
+          isGenericArticle ||
           link.includes('wikipedia.org') ||
           link.includes('wiktionary.org') ||
           link.includes('heyvalaw.com') ||
           link.includes('abadis.ir') ||
-          rawTitle.length < 8
+          link.includes('google.com') ||
+          link.includes('facebook.com')
         ) {
           continue;
         }
@@ -886,10 +910,7 @@ async function discoverFromWebAndUrbanMarkets(region, guild, seenSet, maxCount) 
         const phoneMatch = desc.match(/(?:0\d{2,3}[-\s]?\d{7,8}|09\d{9})/);
         const extractedPhone = phoneMatch ? phoneMatch[0] : 'در منبع عمومی درج نشده';
 
-        const cleanCompanyName = rawTitle.split('|')[0].split('-')[0].trim();
-        if (cleanCompanyName.length < 5) continue;
-
-        const address = `${region.city}، ${region.areaName}`;
+        const address = `${region.city}، خارج از شهرک صنعتی — ${region.areaName}`;
         const fp = normalizeFingerprint(cleanCompanyName, address);
         if (seenSet.has(fp)) continue;
 
@@ -898,7 +919,9 @@ async function discoverFromWebAndUrbanMarkets(region, guild, seenSet, maxCount) 
         )}`;
 
         results.push({
-          companyName: `${cleanCompanyName} (${cleanCity})`,
+          companyName: cleanCompanyName.includes(cleanCity)
+            ? cleanCompanyName
+            : `${cleanCompanyName} (${cleanCity})`,
           cityAndAddress: address,
           roadDistanceKm: region.avgRoadDistanceKm,
           industryOrProduct: guild.guildTitle,
