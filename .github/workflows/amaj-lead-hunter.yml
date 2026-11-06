@@ -2,35 +2,46 @@ name: "ربات هوشمند مشتری‌یاب آماج (هر ۲ ساعت + آ
 
 on:
   schedule:
-    # اجرای خودکار هر ۲ ساعت شبانه‌روز بدون نیاز به روشن بودن سیستم
-    - cron: "0 */2 * * *"
+    # زمان‌بندی دقیق هر ۲ ساعت در دقایق غیرپیک گیت‌هاب (همراه با زمان‌بندی پشتیبان برای تضمین اجرای ۱۰۰٪ منظم)
+    - cron: "13 */2 * * *"
+    - cron: "43 */2 * * *"
   workflow_dispatch:
     inputs:
       zone_override:
         description: "شماره حلقه جغرافیایی (۱ تا ۸) یا خالی برای چرخش خودکار"
         required: false
         default: ""
+      force_run:
+        description: "اجرای فوری بدون بررسی فاصله زمانی"
+        required: false
+        default: "true"
 
 permissions:
   contents: write
 
+concurrency:
+  group: amaj-lead-hunter-production
+  cancel-in-progress: false
+
 jobs:
   hunt-and-dispatch:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
-      - name: دریافت مخزن و حافظه ضدتکرار مشتریان
+      - name: دریافت آخرین وضعیت مخزن و حافظه ضدتکرار مشتریان
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: راه‌اندازی Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: "22"
 
-      - name: نصب پکیج رسمی هوش مصنوعی گوگل
-        run: npm install @google/genai
+      - name: نصب پکیج هوش مصنوعی گوگل
+        run: npm install @google/genai --no-audit --no-fund
 
-      - name: اجرای موتور جستجوی شهر به شهر و ارسال تک‌به‌تک کارت‌ها (۰۰۱+) به بله / تلگرام
+      - name: اجرای موتور چندلایه کاوش (نقشه، نیازمندی‌ها، وب، شهرک‌های صنعتی) و ارسال کارت‌ها به بله
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -38,12 +49,14 @@ jobs:
           BALE_BOT_TOKEN: ${{ secrets.BALE_BOT_TOKEN }}
           BALE_CHAT_ID: ${{ secrets.BALE_CHAT_ID }}
           ZONE_OVERRIDE: ${{ github.event.inputs.zone_override }}
+          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && 'true' || github.event.inputs.force_run }}
         run: node scripts/amaj-autonomous-runner.mjs
 
-      - name: ذخیره خودکار بانک مشتریان دیده‌شده و شاخص روزانه در گیت‌هاب (جلوگیری از ارسال تکراری)
+      - name: ذخیره خودکار بانک مشتریان ارسال‌شده و شماره کارت بعدی در گیت‌هاب
         run: |
           git config user.name "Amaj Lead Hunter Bot"
           git config user.email "bot@amaj-packaging.ir"
+          git pull --rebase origin main || true
           git add data/amaj_state.json || true
-          git diff --staged --quiet || git commit -m "chore(amaj-bot): ثبت کارت‌های جدید (۰۰۱+) و به‌روزرسانی بانک ضدتکرار"
-          git push || true
+          git diff --staged --quiet || git commit -m "chore(amaj-bot): ارسال کارت‌های جدید مشتریان به گروه بله و بروزرسانی حافظه ضدتکرار"
+          git push origin HEAD:main || true
