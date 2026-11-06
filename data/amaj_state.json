@@ -27,7 +27,8 @@
     "githubRepoFullName": "sheikhzade10-sys/amaj-packaging-lead-bot",
     "githubBranch": "main",
     "githubToken": "",
-    "githubLastSyncAt": "2026-11-06T10:06:16.787Z"
+    "githubLastSyncAt": "2026-11-06T10:06:16.787Z",
+    "classifiedsFallbackEnabled": true
   },
   "leads": [
     {
