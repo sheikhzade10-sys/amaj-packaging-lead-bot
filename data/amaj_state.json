@@ -19,8 +19,8 @@
       "PACKAGING_PORTALS",
       "INDUSTRIAL_DIRECTORIES"
     ],
-    "activeZoneIndex": 1,
-    "lastDailyUpdateDate": "2026-11-05",
+    "activeZoneIndex": 2,
+    "lastDailyUpdateDate": "2026-11-06",
     "lastWeeklyCompetitorDate": "2026-11-03",
     "githubConnected": true,
     "githubUsername": "sheikhzade10-sys",
@@ -826,6 +826,18 @@
     }
   ],
   "dailyUpdates": [
+    {
+      "date": "2026-11-06",
+      "updatedAt": "2026-11-06T01:56:17.787Z",
+      "addedKeywords": [
+        "مناقصه خرید کارتن لمینیتی ۱۴۰۵",
+        "استعلام قیمت هاردباکس",
+        "چاپ لیبل دیجیتال تیراژ کم"
+      ],
+      "marketFocusNote": "به‌روزرسانی خودکار روزانه بانک کلیدواژه‌ها و پایش شهرک‌های صنعتی از مبدأ ماهدشت (2026-11-06)",
+      "activeZonesCount": 8,
+      "totalDeduplicatedFingerprints": 22
+    },
     {
       "date": "2026-11-05",
       "updatedAt": "2026-11-05T04:24:07.905Z",
