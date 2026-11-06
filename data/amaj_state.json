@@ -30,7 +30,7 @@
   },
   "leads": [
     {
-      "id": "lead-1793959366070-0-0",
+      "id": "lead-1793959567333-0-0",
       "cardNumber": 11,
       "cardCode": "011",
       "fingerprint": "صنایعغذاییوشکلات‌سازیفرمند(واحدالبرز)_کرج،شهرکبهار",
@@ -51,13 +51,13 @@
       "demandEvidence": "مصرف مستمر جعبه‌های مقوایی لمینیتی، هاردباکس شکلات کادویی و لیبل محصولات ویژه",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:46.070Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:07.333Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959367476-0-1",
+      "id": "lead-1793959568301-0-1",
       "cardNumber": 12,
       "cardCode": "012",
       "fingerprint": "داروسازیومکمل‌هایدامیوانسانیالبرزدارو/واحدهایداروییاشتهارد_اشتهارد،شهرک",
@@ -78,13 +78,13 @@
       "demandEvidence": "نیاز دائمی به کارتن لمینیتی مادر، جعبه دارویی و لیبل‌های دیجیتال با شماره سری ساخت متغیر",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:47.476Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:08.301Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959368325-0-2",
+      "id": "lead-1793959568936-0-2",
       "cardNumber": 13,
       "cardCode": "013",
       "fingerprint": "مجتمعصنایعغذاییوکنسروجاتخوارزمیماهدشت_ماهدشت،شهرکخ",
@@ -105,13 +105,13 @@
       "demandEvidence": "استقرار در همان شهرک صنعتی کارخانه آماج (خوارزمی ماهدشت)؛ نیاز مستمر به لیبل شیشه‌های ترشی/مربا و کارتن لمینیتی",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:48.325Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:08.936Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959368954-0-3",
+      "id": "lead-1793959569596-0-3",
       "cardNumber": 14,
       "cardCode": "014",
       "fingerprint": "لوازمبرقیوآشپزخانهناسیونال/واحدهایصفادشت_صفادشت،شهرکص",
@@ -132,13 +132,13 @@
       "demandEvidence": "مصرف بالا در کارتن‌های ۵ لایه و ۳ لایه لمینیتی تمام‌رنگی با استحکام بالا برای لوازم برقی",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:48.954Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:09.596Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959370224-0-4",
+      "id": "lead-1793959570194-0-4",
       "cardNumber": 15,
       "cardCode": "015",
       "fingerprint": "لابراتوارتخصصیعطروادکلنوخوشبوکنندهگلگونشهریار_شهریار،شهرکگ",
@@ -159,13 +159,13 @@
       "demandEvidence": "نیاز مستقیم به هاردباکس مگنتی و کشویی برای ست‌های عطر + لیبل متالایز دیجیتال تیراژ پایین برای رایحه‌های متعدد",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:50.224Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:10.194Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959371601-0-5",
+      "id": "lead-1793959570832-0-5",
       "cardNumber": 16,
       "cardCode": "016",
       "fingerprint": "فرآورده‌هایکنجدی،اردهوحلواشکریسپهرنظرآباد_نظرآباد،شهرک",
@@ -186,13 +186,13 @@
       "demandEvidence": "تنوع بالای طعم‌ها نیازمند چاپ لیبل دیجیتال ضدچربی و کارتن لمینیتی نمایشگاهی (شلف‌ردی)",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:51.601Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:10.832Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959372393-0-6",
+      "id": "lead-1793959571454-0-6",
       "cardNumber": 17,
       "cardCode": "017",
       "fingerprint": "شویندهوپاک‌کننده‌هایوخانگیکاسپینآبیک_آزادراهکرج-قزوین،ش",
@@ -213,13 +213,13 @@
       "demandEvidence": "نیاز به جعبه لمینیتی پودر شوینده، کارتن مادر و لیبل‌های ضدآب محصولات هتلی و خانگی",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:52.393Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:11.454Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959373173-0-7",
+      "id": "lead-1793959572101-0-7",
       "cardNumber": 18,
       "cardCode": "018",
       "fingerprint": "تولیدوقهوهتخصصیودمنوش‌هایگیاهیکمالشهرکرج_کرج،کمالشهر،شهرکص",
@@ -240,13 +240,13 @@
       "demandEvidence": "استفاده از هاردباکس کادویی دمنوش، جعبه مقوایی لمینیتی ساشه‌ها و لیبل دیجیتال با طرح‌های اختصاصی برای هر لاین قهوه",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:53.173Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:12.101Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959373834-0-8",
+      "id": "lead-1793959572732-0-8",
       "cardNumber": 19,
       "cardCode": "019",
       "fingerprint": "قطعاتخودروولنتترمزسردارانماهدشت_ماهدشت،بلوارسردارا",
@@ -267,13 +267,13 @@
       "demandEvidence": "فاصله کمتر از ۷ کیلومتر تا کارخانه آماج؛ مصرف بسیار بالای جعبه لمینیتی ای‌فلوت و بی‌فلوت برای لنت و فیلتر خودرو",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:53.834Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:12.732Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
     {
-      "id": "lead-1793959374475-0-9",
+      "id": "lead-1793959573342-0-9",
       "cardNumber": 20,
       "cardCode": "020",
       "fingerprint": "ساعتدیواری،رومیزیوهدایایتبلیغاتینصیرآباد_جادهساوه،شهرکصنعت",
@@ -294,8 +294,8 @@
       "demandEvidence": "سفارش‌دهنده دائمی هاردباکس ست مدیریتی، جعبه لمینیتی ساعت و بسته‌بندی‌های اختصاصی سازمانی",
       "activityStatus": "فعال و دایر",
       "crmStatus": "جدید",
-      "discoveredAt": "2026-11-06T10:02:54.475Z",
-      "cycleId": "cycle-1793959365574",
+      "discoveredAt": "2026-11-06T10:06:13.342Z",
+      "cycleId": "cycle-1793959566858",
       "dispatchedToTelegram": false,
       "dispatchedToBale": true
     },
@@ -714,8 +714,8 @@
   ],
   "cycleReports": [
     {
-      "id": "cycle-1793959365574",
-      "timestamp": "2026-11-06T10:02:55.273Z",
+      "id": "cycle-1793959566858",
+      "timestamp": "2026-11-06T10:06:13.999Z",
       "zoneId": "zone-1-mahdasht",
       "zoneTitle": "ماهدشت و شهرک‌های صنعتی خوارزمی و سرداران (مبدأ آماج)",
       "newLeadsCount": 10,
@@ -730,16 +730,16 @@
         "فهرست شرکت های فعال شهرک صنعتی خوارزمی ماهدشت و سرداران"
       ],
       "leadIds": [
-        "lead-1793959366070-0-0",
-        "lead-1793959367476-0-1",
-        "lead-1793959368325-0-2",
-        "lead-1793959368954-0-3",
-        "lead-1793959370224-0-4",
-        "lead-1793959371601-0-5",
-        "lead-1793959372393-0-6",
-        "lead-1793959373173-0-7",
-        "lead-1793959373834-0-8",
-        "lead-1793959374475-0-9"
+        "lead-1793959567333-0-0",
+        "lead-1793959568301-0-1",
+        "lead-1793959568936-0-2",
+        "lead-1793959569596-0-3",
+        "lead-1793959570194-0-4",
+        "lead-1793959570832-0-5",
+        "lead-1793959571454-0-6",
+        "lead-1793959572101-0-7",
+        "lead-1793959572732-0-8",
+        "lead-1793959573342-0-9"
       ],
       "summaryText": "10 کارت مجزا و شماره‌گذاری‌شده (کد #011 تا #020) به محض کشف با فرمت خوانا به گروه ارسال گردید."
     },
@@ -772,7 +772,7 @@
   "dailyUpdates": [
     {
       "date": "2026-11-06",
-      "updatedAt": "2026-11-06T10:01:52.666Z",
+      "updatedAt": "2026-11-06T10:05:21.742Z",
       "addedKeywords": [
         "استعلام خرید کارتن لمینیتی و هاردباکس (2026-11-06)",
         "تولیدکنندگان جدید شهرک صنعتی خوارزمی، بهارستان و اشتهارد",
@@ -797,7 +797,7 @@
       "totalDeduplicatedFingerprints": 5
     }
   ],
-  "nextScheduledRunAt": "2026-11-06T12:02:55.273Z",
+  "nextScheduledRunAt": "2026-11-06T12:06:13.999Z",
   "nextWeeklyCompetitorRunAt": "2026-11-10T10:46:54.166Z",
   "isRunningCycle": true
 }
